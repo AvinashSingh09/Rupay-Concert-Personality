@@ -1,0 +1,640 @@
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import QRCode from 'qrcode';
+import { Camera, Upload, Sparkles, AlertCircle } from 'lucide-react';
+import { PERSONALITIES } from './data/personalities';
+import {
+  RuPayHeaderLogo,
+  RuPayPhotoWatermark,
+  ConcertPersonalityTitle,
+  BackButton,
+  StepIcons,
+} from './components/BrandElements';
+import {
+  generateConcertAvatar,
+  createBrandedDownloadDataUrl,
+} from './services/openaiImageService';
+
+/**
+ * Step 1: Welcome / Start Experience
+ */
+function WelcomeView({ onStart }) {
+  const steps = [
+    {
+      icon: <StepIcons.Personality />,
+      label: 'CHOOSE\nYOUR\nPERSONALITY',
+    },
+    {
+      icon: <StepIcons.Selfie />,
+      label: 'TAKE\nA SELFIE',
+    },
+    {
+      icon: <StepIcons.Wand />,
+      label: 'CREATE\nYOUR CONCERT\nAVATAR',
+    },
+    {
+      icon: <StepIcons.Share />,
+      label: 'DOWNLOAD\nAND\nSHARE',
+    },
+  ];
+
+  return (
+    <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[440px] mx-auto px-6 pt-10 pb-10 text-center select-none animate-fadeIn">
+      {/* Top Branding & Brush Title */}
+      <div className="flex flex-col items-center w-full mt-2">
+        <RuPayHeaderLogo />
+        <div className="mt-3">
+          <ConcertPersonalityTitle />
+        </div>
+      </div>
+
+      {/* Center spacer so concert stage & lasers remain visible */}
+      <div className="flex-1" />
+
+      {/* Bottom 4-step box + Start CTA */}
+      <div className="w-full flex flex-col items-center gap-5">
+        <div className="w-full photobooth-glass rounded-[4px] py-4 px-1.5 grid grid-cols-4 divide-x divide-purple-400/35">
+          {steps.map((step, idx) => (
+            <div
+              key={idx}
+              className="flex flex-col items-center justify-start px-2 text-center"
+            >
+              <div className="h-7 flex items-center justify-center mb-2.5 opacity-95">
+                {step.icon}
+              </div>
+              <p className="text-[8.5px] sm:text-[9.5px] leading-[1.3] font-bold tracking-[0.04em] text-purple-100/95 uppercase whitespace-pre-line">
+                {step.label}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={onStart}
+          className="w-[88%] py-4 px-6 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[14px] sm:text-[15.5px] tracking-[0.06em] uppercase flex items-center justify-center gap-3 transition-transform active:scale-95"
+        >
+          <span>START EXPERIENCE</span>
+          <span className="text-lg leading-none font-bold">→</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Step 2: Choose Your Vibe / Personality Selection
+ */
+function PersonalityView({
+  selectedPersonality,
+  onSelectPersonality,
+  onBack,
+  onContinue,
+}) {
+  return (
+    <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[440px] mx-auto px-6 pt-6 pb-9 select-none animate-fadeIn">
+      {/* Top Back Button */}
+      <div className="w-full flex items-center justify-start">
+        <BackButton onClick={onBack} />
+      </div>
+
+      {/* Section Title */}
+      <h2 className="text-[12.5px] sm:text-[14px] font-extrabold tracking-[0.08em] uppercase text-white text-center my-2 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
+        CHOOSE YOUR VIBE. OWN THE EDGE.
+      </h2>
+
+      {/* 6 Personality Cards */}
+      <div className="w-[88%] flex-1 flex flex-col justify-center gap-2.5 my-1">
+        {PERSONALITIES.map((item) => {
+          const isSelected = selectedPersonality?.id === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onSelectPersonality(item)}
+              className={`w-full py-3 px-4 rounded-[3px] text-center transition-all duration-200 ${
+                isSelected
+                  ? 'photobooth-glass-active scale-[1.02]'
+                  : 'photobooth-glass hover:border-purple-300/80 hover:bg-[#271352]/80'
+              }`}
+            >
+              <div className="text-[11.5px] sm:text-[13px] font-extrabold uppercase tracking-[0.05em] text-white leading-tight">
+                {item.name}
+              </div>
+              <div className="text-[10px] sm:text-[11px] font-medium text-purple-200/90 leading-[1.28] mt-0.5 whitespace-pre-line">
+                {item.subtitle}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Bottom CTA Button */}
+      <div className="w-full flex justify-center mt-2">
+        <button
+          type="button"
+          onClick={onContinue}
+          className="w-[90%] py-4 px-6 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[14px] sm:text-[15px] tracking-[0.05em] uppercase flex items-center justify-center gap-2.5 transition-transform active:scale-95"
+        >
+          <span>CONTINUE TO CAMERA</span>
+          <span className="text-lg leading-none font-bold">→</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Step 3: Camera / Selfie Capture
+ */
+function CameraView({
+  selectedPersonality,
+  capturedSelfie,
+  onCaptureSelfie,
+  onRetake,
+  onSubmit,
+  onBack,
+  isGenerating,
+  errorMsg,
+}) {
+  const videoRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [cameraError, setCameraError] = useState('');
+  const [flashActive, setFlashActive] = useState(false);
+
+  const startCamera = useCallback(async () => {
+    if (capturedSelfie) return;
+    setCameraError('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'user',
+          width: { ideal: 1280 },
+          height: { ideal: 1280 },
+        },
+        audio: false,
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setCameraReady(true);
+      }
+    } catch {
+      setCameraReady(false);
+      setCameraError('Position yourself in the frame or upload a selfie');
+    }
+  }, [capturedSelfie]);
+
+  const stopCamera = useCallback(() => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks();
+      tracks.forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setCameraReady(false);
+  }, []);
+
+  useEffect(() => {
+    if (!capturedSelfie) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+    return () => stopCamera();
+  }, [capturedSelfie, startCamera, stopCamera]);
+
+  const handleShutterClick = () => {
+    if (isGenerating) return;
+    setFlashActive(true);
+    setTimeout(() => setFlashActive(false), 180);
+
+    if (videoRef.current && cameraReady) {
+      const video = videoRef.current;
+      const canvas = document.createElement('canvas');
+      const size = Math.min(video.videoWidth || 1024, video.videoHeight || 1024);
+      canvas.width = 1024;
+      canvas.height = 1024;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
+      const sx = ((video.videoWidth || 1024) - size) / 2;
+      const sy = ((video.videoHeight || 1024) - size) / 2;
+
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, sx, sy, size, size, 0, 0, canvas.width, canvas.height);
+
+      const dataUrl = canvas.toDataURL('image/png', 1.0);
+      onCaptureSelfie(dataUrl);
+      stopCamera();
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        onCaptureSelfie(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[440px] mx-auto px-6 pt-6 pb-8 select-none animate-fadeIn">
+      {/* Top Back Button */}
+      <div className="w-full flex items-center justify-start">
+        <BackButton onClick={onBack} disabled={isGenerating} />
+      </div>
+
+      {/* Selected Personality Pill */}
+      <div className="photobooth-glass rounded-full px-9 py-2.5 text-center min-w-[230px] -mt-1">
+        <div className="text-[11px] sm:text-[12px] font-medium text-purple-200/90 leading-tight">
+          Selected Personality:
+        </div>
+        <div className="text-[15px] sm:text-[17px] font-extrabold uppercase tracking-[0.04em] text-white leading-snug mt-0.5">
+          {selectedPersonality?.name || 'FOODIE'}
+        </div>
+      </div>
+
+      {/* Center Black Square/Portrait Viewfinder Frame */}
+      <div className="relative w-[90%] aspect-[1/1.08] bg-black rounded-[2px] overflow-hidden shadow-[0_12px_35px_rgba(0,0,0,0.85)] border border-purple-500/30 flex items-center justify-center my-2">
+        {!capturedSelfie && (
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className={`w-full h-full object-cover scale-x-[-1] transition-opacity duration-300 ${
+              cameraReady ? 'opacity-100' : 'opacity-0'
+            }`}
+          />
+        )}
+
+        {capturedSelfie && (
+          <img
+            src={capturedSelfie}
+            alt="Captured Selfie"
+            className="w-full h-full object-cover"
+          />
+        )}
+
+        {!capturedSelfie && !cameraReady && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-black">
+            <div className="w-14 h-14 rounded-full bg-purple-950/60 border border-purple-500/40 flex items-center justify-center mb-3 text-purple-300">
+              <Camera className="w-6 h-6" />
+            </div>
+            <p className="text-xs text-purple-200/80 font-medium max-w-[220px] mb-4">
+              {cameraError || 'Position yourself in the frame'}
+            </p>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-2 rounded-full bg-purple-900/70 hover:bg-purple-800/80 border border-purple-400/50 text-xs font-bold uppercase tracking-wider text-purple-100 flex items-center gap-2 transition"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>Upload Photo</span>
+            </button>
+          </div>
+        )}
+
+        {!capturedSelfie && cameraReady && !isGenerating && (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="absolute bottom-3 right-3 px-3 py-1.5 rounded-full bg-black/65 hover:bg-black/85 border border-white/20 text-[10px] font-semibold uppercase tracking-wider text-white/90 flex items-center gap-1.5 backdrop-blur-sm transition"
+          >
+            <Upload className="w-3 h-3" />
+            <span>Upload</span>
+          </button>
+        )}
+
+        {flashActive && (
+          <div className="absolute inset-0 bg-white z-30 animate-ping pointer-events-none" />
+        )}
+
+        {isGenerating && (
+          <div className="absolute inset-0 z-20 bg-[#0d0522]/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+            <div className="relative mb-4">
+              <div className="w-16 h-16 rounded-full border-2 border-pink-500/30 border-t-cyan-300 animate-spin" />
+              <Sparkles className="w-7 h-7 text-pink-400 absolute inset-0 m-auto animate-pulse" />
+            </div>
+            <p className="text-sm font-extrabold uppercase tracking-wider text-white mb-1">
+              Creating Your Concert Avatar...
+            </p>
+            <p className="text-xs text-purple-200/85 max-w-[230px] leading-relaxed">
+              Styling your {selectedPersonality?.name} vibe...
+            </p>
+          </div>
+        )}
+
+        {errorMsg && !isGenerating && (
+          <div className="absolute inset-x-3 bottom-3 z-20 bg-[#230b38]/95 border border-pink-500/70 rounded-md p-3 text-left shadow-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-pink-400 shrink-0 mt-0.5" />
+              <p className="text-xs font-bold text-pink-200 leading-snug">
+                {errorMsg}
+              </p>
+            </div>
+          </div>
+        )}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+      </div>
+
+      {/* Bottom Camera Controls: RETAKE | SHUTTER | SUBMIT */}
+      <div className="w-[92%] flex items-center justify-between gap-3 mt-1">
+        <button
+          type="button"
+          onClick={() => {
+            onRetake();
+            startCamera();
+          }}
+          disabled={isGenerating}
+          className="flex-1 py-2.5 px-4 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[11.5px] sm:text-[12.5px] tracking-[0.04em] uppercase flex items-center justify-center gap-1.5 transition-transform active:scale-95 disabled:opacity-50"
+        >
+          <span className="text-sm leading-none">↻</span>
+          <span>RETAKE</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleShutterClick}
+          disabled={isGenerating}
+          aria-label="Take Photo"
+          className="w-16 h-16 rounded-full shutter-ring p-1 shadow-[0_0_22px_rgba(167,220,255,0.65)] transition-transform active:scale-90 shrink-0 disabled:opacity-50"
+        >
+          <div className="w-full h-full rounded-full bg-[#a8ccf0] hover:bg-[#bad8f7] border-2 border-white/80 transition-colors" />
+        </button>
+
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={isGenerating}
+          className="flex-1 py-2.5 px-4 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[11.5px] sm:text-[12.5px] tracking-[0.04em] uppercase flex items-center justify-center gap-1.5 transition-transform active:scale-95 disabled:opacity-50"
+        >
+          <span className="text-xs leading-none">&gt;</span>
+          <span>SUBMIT</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Step 4: Result / Avatar Ready
+ */
+function ResultView({ generatedAvatar, selectedPersonality, onDone }) {
+  const [qrDataUrl, setQrDataUrl] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const displayImage = generatedAvatar || '/assets/sample-foodie.jpg';
+
+  useEffect(() => {
+    let active = true;
+    const generateQr = async () => {
+      try {
+        const shareUrl = `${window.location.origin}/?avatar=${encodeURIComponent(
+          selectedPersonality?.id || 'foodie'
+        )}`;
+        const url = await QRCode.toDataURL(shareUrl, {
+          width: 200,
+          margin: 1,
+          color: {
+            dark: '#000000',
+            light: '#ffffff',
+          },
+        });
+        if (active) setQrDataUrl(url);
+      } catch (e) {
+        console.error('QR generation error:', e);
+      }
+    };
+    generateQr();
+    return () => {
+      active = false;
+    };
+  }, [selectedPersonality]);
+
+  const handleDownloadPhoto = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      const brandedDataUrl = await createBrandedDownloadDataUrl(displayImage);
+      const link = document.createElement('a');
+      link.href = brandedDataUrl;
+      link.download = `RuPay-Concert-Avatar-${(
+        selectedPersonality?.id || 'foodie'
+      ).toLowerCase()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  return (
+    <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[440px] mx-auto px-6 pt-7 pb-8 text-center select-none animate-fadeIn">
+      {/* Top Branding & Brush Title */}
+      <div className="flex flex-col items-center w-full">
+        <RuPayHeaderLogo compact />
+        <ConcertPersonalityTitle compact />
+
+        <div className="mt-1.5 flex flex-col items-center">
+          <p className="text-[14px] sm:text-[15.5px] font-extrabold uppercase tracking-[0.06em] text-white leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
+            YOUR CONCERT AVATAR
+          </p>
+          <p className="font-brush text-[24px] sm:text-[27px] uppercase tracking-wider text-gradient-personality leading-tight -rotate-1">
+            IS READY!
+          </p>
+        </div>
+      </div>
+
+      {/* Framed Generated Concert Avatar */}
+      <div className="relative w-[94%] aspect-[1.22/1] rounded-[3px] overflow-hidden border-[1.5px] border-purple-400/80 shadow-[0_0_32px_rgba(244,102,181,0.35)] my-2 bg-[#12072b]">
+        <img
+          src={displayImage}
+          alt="Your Concert Avatar"
+          className="w-full h-full object-cover"
+        />
+        <RuPayPhotoWatermark />
+      </div>
+
+      {/* QR Code & Download Box */}
+      <div className="w-[82%] photobooth-glass rounded-[4px] p-3 flex items-center justify-between gap-3.5">
+        <div className="w-16 h-16 sm:w-[72px] sm:h-[72px] bg-white p-1 rounded-[2px] shrink-0 flex items-center justify-center shadow-inner">
+          {qrDataUrl ? (
+            <img
+              src={qrDataUrl}
+              alt="Scan QR to download"
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-200 animate-pulse" />
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleDownloadPhoto}
+          className="flex-1 flex flex-col items-center justify-center text-center group cursor-pointer py-1"
+          title="Download your concert photo"
+        >
+          <div className="w-7 h-7 flex items-center justify-center text-purple-200 group-hover:text-pink-300 group-hover:translate-y-0.5 transition-all mb-1">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 3v12" />
+              <path d="m7 10 5 5 5-5" />
+              <path d="M5 21h14" />
+            </svg>
+          </div>
+          <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.05em] text-white group-hover:text-pink-200 leading-[1.3] whitespace-pre-line">
+            {isDownloading ? 'PREPARING PHOTO...' : 'SCAN TO DOWNLOAD\nYOUR PHOTO'}
+          </span>
+        </button>
+      </div>
+
+      {/* Bottom DONE Button */}
+      <button
+        type="button"
+        onClick={onDone}
+        className="mt-1 px-9 py-2.5 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[12px] sm:text-[13px] tracking-[0.05em] uppercase flex items-center justify-center gap-2 transition-transform active:scale-95"
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+        <span>DONE</span>
+      </button>
+    </div>
+  );
+}
+
+export default function App() {
+  const [step, setStep] = useState(1);
+  const [selectedPersonality, setSelectedPersonality] = useState(PERSONALITIES[4]);
+  const [capturedSelfie, setCapturedSelfie] = useState(null);
+  const [generatedAvatar, setGeneratedAvatar] = useState('/assets/sample-foodie.jpg');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleGenerateAvatar = async () => {
+    setErrorMsg('');
+    setIsGenerating(true);
+
+    try {
+      const result = await generateConcertAvatar({
+        selfieDataUrl: capturedSelfie,
+        personality: selectedPersonality,
+      });
+
+      setGeneratedAvatar(result.imageUrl);
+      setStep(4);
+    } catch (err) {
+      setErrorMsg(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleReset = () => {
+    setCapturedSelfie(null);
+    setErrorMsg('');
+    setStep(1);
+  };
+
+  return (
+    <div className="relative w-full h-[100dvh] bg-[#080316] text-white overflow-hidden flex items-center justify-center">
+      {/* Ambient blurred concert backdrop for wide desktop screens */}
+      <img
+        src="/assets/concert-bg.jpg"
+        alt=""
+        aria-hidden="true"
+        className="fixed inset-0 w-full h-full object-cover object-center blur-2xl scale-110 opacity-45 pointer-events-none select-none"
+      />
+
+      {/* Main Photobooth Kiosk Canvas */}
+      <main className="relative w-full h-full sm:max-w-[460px] bg-[#0c0521] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.9)]">
+        {/* Sharp Concert Stage Background */}
+        <img
+          src="/assets/concert-bg.jpg"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none"
+        />
+
+        {/* Subtle top/bottom gradient vignette for text clarity */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(11,5,32,0.55) 0%, rgba(11,5,32,0.12) 40%, rgba(11,5,32,0.25) 75%, rgba(8,3,22,0.65) 100%)',
+          }}
+        />
+
+        {step === 1 && <WelcomeView onStart={() => setStep(2)} />}
+
+        {step === 2 && (
+          <PersonalityView
+            selectedPersonality={selectedPersonality}
+            onSelectPersonality={(p) => setSelectedPersonality(p)}
+            onBack={() => setStep(1)}
+            onContinue={() => setStep(3)}
+          />
+        )}
+
+        {step === 3 && (
+          <CameraView
+            selectedPersonality={selectedPersonality}
+            capturedSelfie={capturedSelfie}
+            onCaptureSelfie={(dataUrl) => setCapturedSelfie(dataUrl)}
+            onRetake={() => {
+              setCapturedSelfie(null);
+              setErrorMsg('');
+            }}
+            onSubmit={handleGenerateAvatar}
+            onBack={() => setStep(2)}
+            isGenerating={isGenerating}
+            errorMsg={errorMsg}
+          />
+        )}
+
+        {step === 4 && (
+          <ResultView
+            generatedAvatar={generatedAvatar}
+            selectedPersonality={selectedPersonality}
+            onDone={handleReset}
+          />
+        )}
+      </main>
+    </div>
+  );
+}

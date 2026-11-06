@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /* "CONCERT" cyan-to-periwinkle brush gradient */
+  .text-gradient-concert {
+    background: linear-gradient(92deg, #7be6ff 0%, #8bc6ff 48%, #a6abff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 3px 12px rgba(123, 230, 255, 0.28));
+  }
+
+  /* "PERSONALITY" & "IS READY!" pink-magenta-to-orange brush gradient */
+  .text-gradient-personality {
+    background: linear-gradient(92deg, #d76dff 0%, #f559a5 52%, #ff7340 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 3px 12px rgba(245, 89, 165, 0.3));
+  }
+
+  /* Signature pill CTA gradient: icy light blue -> hot pink -> coral orange */
+  .bg-rupay-pill {
+    background: linear-gradient(95deg, #a7dcff 0%, #c6a8ff 28%, #f466b5 68%, #ff6e42 100%);
+    box-shadow: 0 6px 24px -4px rgba(244, 102, 181, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.65);
+  }
+
+  .bg-rupay-pill:hover {
+    background: linear-gradient(95deg, #b6e3ff 0%, #d1b6ff 28%, #f874be 68%, #ff7d54 100%);
+    box-shadow: 0 8px 28px -2px rgba(244, 102, 181, 0.72), inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  }
+
+  /* Frosted purple photobooth card */
+  .photobooth-glass {
+    background: linear-gradient(180deg, rgba(31, 14, 68, 0.76) 0%, rgba(20, 8, 46, 0.82) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(167, 118, 240, 0.52);
+    box-shadow: 0 8px 24px rgba(6, 2, 18, 0.5), inset 0 0 18px rgba(155, 102, 255, 0.08);
+  }
+
+  .photobooth-glass-active {
+    background: linear-gradient(180deg, rgba(64, 25, 128, 0.88) 0%, rgba(38, 14, 84, 0.92) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(244, 102, 181, 0.95);
+    box-shadow: 0 0 22px rgba(244, 102, 181, 0.45), inset 0 0 16px rgba(167, 220, 255, 0.18);
+  }
+
+  /* Shutter button outer gradient ring */
+  .shutter-ring {
+    background: linear-gradient(135deg, #9be2ff 0%, #d884ff 50%, #ff6b52 100%);
+  }
+}
+
+/* Custom scrollbar for sleek kiosk look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #090418;
+}
+::-webkit-scrollbar-thumb {
+  background: #3b2170;
+  border-radius: 3px;
+}
