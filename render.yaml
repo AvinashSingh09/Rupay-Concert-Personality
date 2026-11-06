@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: rupay-concert-personality
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_OPENAI_API_KEY
+        sync: false
+      - key: VITE_OPENAI_IMAGE_MODEL
+        value: gpt-image-2.6-sunburst
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
