@@ -2,6 +2,7 @@ import rupayLogo from '../assets/rupay-on.png';
 
 const DEFAULT_MODEL = import.meta.env.VITE_OPENAI_IMAGE_MODEL || 'gpt-image-2.6-sunburst';
 const SELFIE_EXTENSIONS = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
+const AVATAR_FORMAT = 'webp';
 
 /**
  * Converts a base64 selfie into a file for the edit request.
@@ -33,7 +34,7 @@ function extractImageFromResponse(result) {
     throw new Error('Empty image response received.');
   }
   if (item.b64_json) {
-    return `data:image/png;base64,${item.b64_json}`;
+    return `data:image/${AVATAR_FORMAT};base64,${item.b64_json}`;
   }
   if (item.url) {
     return item.url;
@@ -65,7 +66,11 @@ export async function generateConcertAvatar({ selfieDataUrl, personality }) {
   formData.append('image', dataUrlToSelfieFile(selfieDataUrl));
   formData.append('size', '1024x1024');
   formData.append('quality', 'high');
-  formData.append('output_format', 'png');
+  formData.append('output_format', AVATAR_FORMAT);
+  formData.append('output_compression', '90');
+  if (/^gpt-image-2\.[56]-(flare|sunburst)(-|$)/.test(DEFAULT_MODEL)) {
+    formData.append('complexity', 'medium');
+  }
   if (DEFAULT_MODEL === 'gpt-image-1.5') {
     formData.append('input_fidelity', 'high');
   }

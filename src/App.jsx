@@ -187,7 +187,7 @@ function CameraView({
           stream.getTracks().forEach((track) => track.stop());
         }
       } catch {
-        if (active) setCameraError('Camera unavailable. Upload a clear, front-facing selfie.');
+        if (active) setCameraError('Camera unavailable. Upload a well-lit, front-facing selfie of one person.');
       }
     };
     startCamera();
@@ -231,7 +231,7 @@ function CameraView({
 
     setFlashActive(true);
     setTimeout(() => setFlashActive(false), 180);
-    onCaptureSelfie(canvas.toDataURL('image/png'));
+    onCaptureSelfie(canvas.toDataURL('image/jpeg', 0.94));
   };
 
   const handleFileUpload = (e) => {
@@ -307,9 +307,15 @@ function CameraView({
         )}
 
         {!capturedSelfie && cameraReady && (
-          <p className="absolute top-3 inset-x-3 text-center text-[11px] text-white bg-black/65 rounded-full py-1">
-            Center your face in good light.
-          </p>
+          <div className="absolute inset-0 pointer-events-none">
+            <p className="absolute top-3 inset-x-3 text-center text-[11px] text-white bg-black/65 rounded-full px-2 py-1">
+              Fit one face inside the oval and face the light.
+            </p>
+            <div
+              aria-hidden="true"
+              className="absolute top-[19%] inset-x-[27%] h-[55%] rounded-[50%] border-2 border-dashed border-white/80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]"
+            />
+          </div>
         )}
 
         {!capturedSelfie && cameraReady && !isGenerating && (

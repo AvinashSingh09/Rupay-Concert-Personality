@@ -1,5 +1,5 @@
-const PRESERVE_SELFIE = `Edit the supplied selfie into a photorealistic concert portrait. Give the guest the expression described in the scene through natural movement around the eyes, cheeks, and mouth. Preserve their identity from the selfie, including their facial proportions, feature shapes, skin tone and texture, distinctive marks, makeup, hair, facial hair, and glasses. Keep their gaze and head angle close to the selfie and keep the face at a similar scale, in focus, evenly lit, and unobstructed.
-Apply the concert styling to the background, clothing, and props below the face. Use stage lighting in the crowd and on the clothing. Keep props clear of the face.`;
+const PRESERVE_SELFIE = `Edit the supplied selfie into a photorealistic concert portrait. Use the photographed person as the foreground subject. Preserve their facial structure, eye spacing, nose and lip shape, skin tone and texture, distinctive marks, hair, facial hair, and glasses. Keep the original head angle, gaze, and face placement. Change the expression with small, natural movements around the eyes, cheeks, and mouth while keeping the features recognizable.
+Put the concert lighting on the background and outfit. Keep the guest's face sharp, evenly lit, and clear of props.`;
 
 export const PERSONALITIES = [
   {
