@@ -1,68 +1,36 @@
 import React from 'react';
+import rupayLogo from '../assets/rupay-on.png';
 
 /**
  * RuPay + "Own the edge" header logo lockup matching Screen 1 and Screen 4
  */
 export function RuPayHeaderLogo({ compact = false }) {
   return (
-    <div className={`flex flex-col items-center select-none ${compact ? 'scale-95' : ''}`}>
-      {/* RuPay wordmark + orange/green chevron */}
-      <div className="inline-flex items-center gap-0.5 leading-none">
-        <span className="font-sans italic font-black tracking-tight text-white text-[18px] sm:text-[21px] drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
-          RuPay
-        </span>
-        <svg
-          width="15"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="none"
-          className="-ml-0.5 translate-y-[0.5px]"
-          aria-hidden="true"
-        >
-          <polygon points="2,1 11,8 0,15" fill="#FF7722" />
-          <polygon points="7,3 15,9 5,15" fill="#18A558" />
-        </svg>
-      </div>
-
-      {/* "Own the edge" lockup */}
-      <div className="flex items-baseline -mt-1 leading-none">
-        <span className="font-sans italic font-extrabold text-white text-[20px] sm:text-[23px] tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
-          Own the
-        </span>
-        <span className="font-script text-white text-[28px] sm:text-[33px] ml-1.5 -rotate-3 translate-y-[2px] drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
-          edge
-        </span>
-      </div>
-    </div>
+    <img
+      src={rupayLogo}
+      alt="RuPay — Own the edge"
+      width={640}
+      height={275}
+      className={`h-auto select-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] ${
+        compact ? 'w-28 sm:w-[124px]' : 'w-[122px] sm:w-[132px]'
+      }`}
+    />
   );
 }
 
 /**
- * Inline RuPay mark for top-right watermark on the generated photo (Screen 4)
+ * RuPay logo watermark on the generated photo (Screen 4)
  */
 export function RuPayPhotoWatermark() {
   return (
-    <div className="absolute inset-x-0 top-0 p-3 sm:p-4 flex items-start justify-between pointer-events-none bg-gradient-to-b from-black/55 via-black/20 to-transparent">
-      {/* Top-Left: Own the edge */}
-      <div className="flex items-baseline leading-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
-        <span className="font-sans italic font-extrabold text-white text-[12px] sm:text-[13px] tracking-tight">
-          Own the
-        </span>
-        <span className="font-script text-white text-[16px] sm:text-[18px] ml-1 translate-y-[1px]">
-          edge
-        </span>
-      </div>
-
-      {/* Top-Right: RuPay */}
-      <div className="inline-flex items-center gap-0.5 leading-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
-        <span className="font-sans italic font-black tracking-tight text-white text-[13px] sm:text-[14px]">
-          RuPay
-        </span>
-        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <polygon points="2,1 11,8 0,15" fill="#FF7722" />
-          <polygon points="7,3 15,9 5,15" fill="#18A558" />
-        </svg>
-      </div>
+    <div className="absolute inset-x-0 top-0 p-3 sm:p-4 flex justify-end pointer-events-none bg-gradient-to-b from-black/55 via-black/20 to-transparent">
+      <img
+        src={rupayLogo}
+        alt=""
+        width={640}
+        height={275}
+        className="w-[24%] h-auto drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
+      />
     </div>
   );
 }

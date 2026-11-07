@@ -1,3 +1,5 @@
+import rupayLogo from '../assets/rupay-on.png';
+
 const DEFAULT_MODEL = import.meta.env.VITE_OPENAI_IMAGE_MODEL || 'gpt-image-2.6-sunburst';
 const SELFIE_EXTENSIONS = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
 
@@ -86,90 +88,50 @@ export async function generateConcertAvatar({ selfieDataUrl, personality }) {
  * so the downloaded PNG matches Screen 4 of the photobooth.
  */
 export async function createBrandedDownloadDataUrl(imageSrc) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const width = 1200;
-      const height = 960;
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
+  const avatar = new Image();
+  avatar.crossOrigin = 'anonymous';
+  avatar.src = imageSrc;
+  const logo = new Image();
+  logo.src = rupayLogo;
 
-      const imgRatio = img.width / img.height;
-      const targetRatio = width / height;
-      let sx = 0,
-        sy = 0,
-        sw = img.width,
-        sh = img.height;
+  try {
+    await Promise.all([avatar.decode(), logo.decode()]);
+  } catch {
+    return imageSrc;
+  }
 
-      if (imgRatio > targetRatio) {
-        sw = img.height * targetRatio;
-        sx = (img.width - sw) / 2;
-      } else {
-        sh = img.width / targetRatio;
-        sy = (img.height - sh) / 2;
-      }
+  const canvas = document.createElement('canvas');
+  const width = 1200;
+  const height = 960;
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
 
-      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, width, height);
+  const targetRatio = width / height;
+  const cropWidth = Math.min(avatar.naturalWidth, avatar.naturalHeight * targetRatio);
+  const cropHeight = Math.min(avatar.naturalHeight, avatar.naturalWidth / targetRatio);
+  const cropX = (avatar.naturalWidth - cropWidth) / 2;
+  const cropY = (avatar.naturalHeight - cropHeight) / 2;
+  ctx.drawImage(avatar, cropX, cropY, cropWidth, cropHeight, 0, 0, width, height);
 
-      const topGrad = ctx.createLinearGradient(0, 0, 0, 150);
-      topGrad.addColorStop(0, 'rgba(10, 4, 28, 0.65)');
-      topGrad.addColorStop(1, 'rgba(10, 4, 28, 0)');
-      ctx.fillStyle = topGrad;
-      ctx.fillRect(0, 0, width, 150);
+  const topGrad = ctx.createLinearGradient(0, 0, 0, 240);
+  topGrad.addColorStop(0, 'rgba(10, 4, 28, 0.65)');
+  topGrad.addColorStop(1, 'rgba(10, 4, 28, 0)');
+  ctx.fillStyle = topGrad;
+  ctx.fillRect(0, 0, width, 240);
 
-      // Top-left: "Own the edge"
-      ctx.save();
-      ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-      ctx.shadowBlur = 8;
-      ctx.font = 'italic 800 26px Montserrat, sans-serif';
-      ctx.fillText('Own the ', 36, 56);
-      const ownWidth = ctx.measureText('Own the ').width;
-      ctx.font = 'italic 400 34px "Kaushan Script", cursive';
-      ctx.fillText('edge', 36 + ownWidth - 2, 58);
-      ctx.restore();
+  const logoWidth = 270;
+  const logoHeight = logoWidth * logo.naturalHeight / logo.naturalWidth;
+  const inset = 38;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+  ctx.shadowBlur = 8;
+  ctx.drawImage(logo, width - logoWidth - inset, inset, logoWidth, logoHeight);
+  ctx.restore();
 
-      // Top-right: "RuPay" + orange/green chevron
-      ctx.save();
-      ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-      ctx.shadowBlur = 8;
-      ctx.font = 'italic 900 32px Montserrat, sans-serif';
-      const rupayText = 'RuPay';
-      const rupayWidth = ctx.measureText(rupayText).width;
-      const rightX = width - 64 - rupayWidth;
-      ctx.fillText(rupayText, rightX, 58);
+  ctx.strokeStyle = 'rgba(196, 122, 255, 0.85)';
+  ctx.lineWidth = 8;
+  ctx.strokeRect(4, 4, width - 8, height - 8);
 
-      const triX = width - 56;
-      const triY = 32;
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = '#f97316';
-      ctx.beginPath();
-      ctx.moveTo(triX, triY);
-      ctx.lineTo(triX + 14, triY + 14);
-      ctx.lineTo(triX - 3, triY + 26);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = '#16a34a';
-      ctx.beginPath();
-      ctx.moveTo(triX + 7, triY + 6);
-      ctx.lineTo(triX + 20, triY + 18);
-      ctx.lineTo(triX + 4, triY + 28);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-
-      ctx.strokeStyle = 'rgba(196, 122, 255, 0.85)';
-      ctx.lineWidth = 8;
-      ctx.strokeRect(4, 4, width - 8, height - 8);
-
-      resolve(canvas.toDataURL('image/png'));
-    };
-    img.onerror = () => resolve(imageSrc);
-    img.src = imageSrc;
-  });
+  return canvas.toDataURL('image/png');
 }
