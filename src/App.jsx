@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import QRCode from 'qrcode';
 import { Camera, Upload, Sparkles, AlertCircle } from 'lucide-react';
 import { PERSONALITIES } from './data/personalities';
@@ -158,83 +158,86 @@ function CameraView({
 }) {
   const videoRef = useRef(null);
   const fileInputRef = useRef(null);
+  const [cameraAttempt, setCameraAttempt] = useState(0);
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState('');
   const [flashActive, setFlashActive] = useState(false);
 
-  const startCamera = useCallback(async () => {
-    if (capturedSelfie) return;
-    setCameraError('');
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'user',
-          width: { ideal: 1280 },
-          height: { ideal: 1280 },
-        },
-        audio: false,
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setCameraReady(true);
-      }
-    } catch {
-      setCameraReady(false);
-      setCameraError('Position yourself in the frame or upload a selfie');
-    }
-  }, [capturedSelfie]);
-
-  const stopCamera = useCallback(() => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = videoRef.current.srcObject.getTracks();
-      tracks.forEach((track) => track.stop());
-      videoRef.current.srcObject = null;
-    }
-    setCameraReady(false);
-  }, []);
-
   useEffect(() => {
-    if (!capturedSelfie) {
-      startCamera();
-    } else {
-      stopCamera();
-    }
-    return () => stopCamera();
-  }, [capturedSelfie, startCamera, stopCamera]);
+    const video = videoRef.current;
+    if (!video || capturedSelfie) return;
+
+    let active = true;
+    let stream;
+    setCameraReady(false);
+    setCameraError('');
+    const startCamera = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'user',
+            width: { ideal: 1280 },
+            height: { ideal: 1280 },
+          },
+          audio: false,
+        });
+        if (active) {
+          video.srcObject = stream;
+        } else {
+          stream.getTracks().forEach((track) => track.stop());
+        }
+      } catch {
+        if (active) setCameraError('Camera unavailable. Upload a clear, front-facing selfie.');
+      }
+    };
+    startCamera();
+
+    return () => {
+      active = false;
+      stream?.getTracks().forEach((track) => track.stop());
+      video.srcObject = null;
+    };
+  }, [capturedSelfie, cameraAttempt]);
 
   const handleShutterClick = () => {
     if (isGenerating) return;
+
+    const video = videoRef.current;
+    if (!cameraReady || !video?.videoWidth || !video.videoHeight || video.readyState < 2) {
+      fileInputRef.current?.click();
+      return;
+    }
+
+    const previewRatio = video.clientWidth / video.clientHeight;
+    const cropWidth = Math.min(video.videoWidth, video.videoHeight * previewRatio);
+    const cropHeight = Math.min(video.videoHeight, video.videoWidth / previewRatio);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(cropWidth);
+    canvas.height = Math.round(cropHeight);
+    const ctx = canvas.getContext('2d');
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(
+      video,
+      (video.videoWidth - cropWidth) / 2,
+      (video.videoHeight - cropHeight) / 2,
+      cropWidth,
+      cropHeight,
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    );
+
     setFlashActive(true);
     setTimeout(() => setFlashActive(false), 180);
-
-    if (videoRef.current && cameraReady) {
-      const video = videoRef.current;
-      const canvas = document.createElement('canvas');
-      const size = Math.min(video.videoWidth || 1024, video.videoHeight || 1024);
-      canvas.width = 1024;
-      canvas.height = 1024;
-      const ctx = canvas.getContext('2d');
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-
-      const sx = ((video.videoWidth || 1024) - size) / 2;
-      const sy = ((video.videoHeight || 1024) - size) / 2;
-
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(video, sx, sy, size, size, 0, 0, canvas.width, canvas.height);
-
-      const dataUrl = canvas.toDataURL('image/png', 1.0);
-      onCaptureSelfie(dataUrl);
-      stopCamera();
-    } else {
-      fileInputRef.current?.click();
-    }
+    onCaptureSelfie(canvas.toDataURL('image/png'));
   };
 
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = '';
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') {
@@ -266,6 +269,7 @@ function CameraView({
         {!capturedSelfie && (
           <video
             ref={videoRef}
+            onCanPlay={() => setCameraReady(true)}
             autoPlay
             playsInline
             muted
@@ -289,7 +293,7 @@ function CameraView({
               <Camera className="w-6 h-6" />
             </div>
             <p className="text-xs text-purple-200/80 font-medium max-w-[220px] mb-4">
-              {cameraError || 'Position yourself in the frame'}
+              {cameraError || 'Center your face and look toward the camera.'}
             </p>
             <button
               type="button"
@@ -300,6 +304,12 @@ function CameraView({
               <span>Upload Photo</span>
             </button>
           </div>
+        )}
+
+        {!capturedSelfie && cameraReady && (
+          <p className="absolute top-3 inset-x-3 text-center text-[11px] text-white bg-black/65 rounded-full py-1">
+            Center your face in good light.
+          </p>
         )}
 
         {!capturedSelfie && cameraReady && !isGenerating && (
@@ -333,7 +343,7 @@ function CameraView({
         )}
 
         {errorMsg && !isGenerating && (
-          <div className="absolute inset-x-3 bottom-3 z-20 bg-[#230b38]/95 border border-pink-500/70 rounded-md p-3 text-left shadow-lg">
+          <div role="alert" className="absolute inset-x-3 bottom-3 z-20 bg-[#230b38]/95 border border-pink-500/70 rounded-md p-3 text-left shadow-lg">
             <div className="flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-pink-400 shrink-0 mt-0.5" />
               <p className="text-xs font-bold text-pink-200 leading-snug">
@@ -346,7 +356,7 @@ function CameraView({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp"
           onChange={handleFileUpload}
           className="hidden"
         />
@@ -358,7 +368,7 @@ function CameraView({
           type="button"
           onClick={() => {
             onRetake();
-            startCamera();
+            setCameraAttempt((attempt) => attempt + 1);
           }}
           disabled={isGenerating}
           className="flex-1 py-2.5 px-4 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[11.5px] sm:text-[12.5px] tracking-[0.04em] uppercase flex items-center justify-center gap-1.5 transition-transform active:scale-95 disabled:opacity-50"
@@ -380,7 +390,7 @@ function CameraView({
         <button
           type="button"
           onClick={onSubmit}
-          disabled={isGenerating}
+          disabled={!capturedSelfie || isGenerating}
           className="flex-1 py-2.5 px-4 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[11.5px] sm:text-[12.5px] tracking-[0.04em] uppercase flex items-center justify-center gap-1.5 transition-transform active:scale-95 disabled:opacity-50"
         >
           <span className="text-xs leading-none">&gt;</span>
@@ -398,7 +408,7 @@ function ResultView({ generatedAvatar, selectedPersonality, onDone }) {
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const displayImage = generatedAvatar || '/assets/sample-foodie.jpg';
+  const displayImage = generatedAvatar;
 
   useEffect(() => {
     let active = true;
@@ -542,11 +552,13 @@ export default function App() {
   const [step, setStep] = useState(1);
   const [selectedPersonality, setSelectedPersonality] = useState(PERSONALITIES[4]);
   const [capturedSelfie, setCapturedSelfie] = useState(null);
-  const [generatedAvatar, setGeneratedAvatar] = useState('/assets/sample-foodie.jpg');
+  const [generatedAvatar, setGeneratedAvatar] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleGenerateAvatar = async () => {
+    if (!capturedSelfie || isGenerating) return;
+
     setErrorMsg('');
     setIsGenerating(true);
 
@@ -567,6 +579,7 @@ export default function App() {
 
   const handleReset = () => {
     setCapturedSelfie(null);
+    setGeneratedAvatar(null);
     setErrorMsg('');
     setStep(1);
   };
@@ -615,7 +628,10 @@ export default function App() {
           <CameraView
             selectedPersonality={selectedPersonality}
             capturedSelfie={capturedSelfie}
-            onCaptureSelfie={(dataUrl) => setCapturedSelfie(dataUrl)}
+            onCaptureSelfie={(dataUrl) => {
+              setCapturedSelfie(dataUrl);
+              setErrorMsg('');
+            }}
             onRetake={() => {
               setCapturedSelfie(null);
               setErrorMsg('');

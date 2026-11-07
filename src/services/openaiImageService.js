@@ -1,18 +1,25 @@
 const DEFAULT_MODEL = import.meta.env.VITE_OPENAI_IMAGE_MODEL || 'gpt-image-2.6-sunburst';
+const SELFIE_EXTENSIONS = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
 
 /**
- * Converts a base64 Data URL into a Blob for multipart/form-data upload
+ * Converts a base64 selfie into a file for the edit request.
  */
-function dataUrlToBlob(dataUrl) {
+function dataUrlToSelfieFile(dataUrl) {
   const [header, base64] = dataUrl.split(',');
-  const mimeMatch = header.match(/:(.*?);/);
-  const mime = mimeMatch ? mimeMatch[1] : 'image/png';
-  const binary = atob(base64);
-  const array = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    array[i] = binary.charCodeAt(i);
+  const mime = header.match(/^data:(image\/\w+);base64$/)?.[1];
+  const extension = SELFIE_EXTENSIONS[mime];
+  if (!extension || !base64) {
+    throw new Error('Choose a JPG, PNG, or WebP selfie.');
   }
-  return new Blob([array], { type: mime });
+  const binary = atob(base64);
+  if (binary.length >= 50_000_000) {
+    throw new Error('Choose a selfie smaller than 50 MB.');
+  }
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index++) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return new File([bytes], `selfie.${extension}`, { type: mime });
 }
 
 /**
@@ -33,7 +40,7 @@ function extractImageFromResponse(result) {
 }
 
 /**
- * Generates or edits a concert personality avatar using the configured image model.
+ * Edits the guest's selfie into a concert personality avatar.
  *
  * @param {Object} params
  * @param {string} params.selfieDataUrl - Base64 data URL of the user's captured selfie
@@ -41,100 +48,37 @@ function extractImageFromResponse(result) {
  * @returns {Promise<{ imageUrl: string }>}
  */
 export async function generateConcertAvatar({ selfieDataUrl, personality }) {
+  if (!selfieDataUrl) {
+    throw new Error('Take or upload a selfie first.');
+  }
+
   const apiKey = (import.meta.env.VITE_OPENAI_API_KEY || '').trim();
-  const model = DEFAULT_MODEL;
-
   if (!apiKey || apiKey === 'your_openai_api_key_here') {
-    // Graceful fallback to sample concert avatar if environment key is not set
-    await new Promise((r) => setTimeout(r, 1800));
-    return { imageUrl: '/assets/sample-foodie.jpg' };
+    throw new Error('Avatar generation is unavailable. The photobooth API key needs to be configured.');
   }
 
-  const prompt =
-    personality?.prompt ||
-    'Transform this person into a vibrant live concert avatar with neon stage lasers.';
-
-  // 1. If we have a captured selfie, use /v1/images/edits
-  if (selfieDataUrl) {
-    try {
-      const jsonEditRes = await fetch('https://api.openai.com/v1/images/edits', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          prompt,
-          images: [{ image_url: selfieDataUrl }],
-          quality: 'high',
-          complexity: 'high',
-          output_format: 'png',
-        }),
-      });
-
-      if (jsonEditRes.ok) {
-        const data = await jsonEditRes.json();
-        return {
-          imageUrl: extractImageFromResponse(data),
-        };
-      }
-
-      // Fallback to multipart/form-data upload to /v1/images/edits
-      const imageBlob = dataUrlToBlob(selfieDataUrl);
-      const formData = new FormData();
-      formData.append('model', model);
-      formData.append('prompt', prompt);
-      formData.append('image', imageBlob, 'selfie.png');
-      formData.append('size', '1024x1024');
-      formData.append('quality', 'high');
-      formData.append('complexity', 'high');
-
-      const formEditRes = await fetch('https://api.openai.com/v1/images/edits', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: formData,
-      });
-
-      if (formEditRes.ok) {
-        const data = await formEditRes.json();
-        return {
-          imageUrl: extractImageFromResponse(data),
-        };
-      }
-    } catch (editErr) {
-      console.warn('Edit endpoint fallback:', editErr);
-    }
+  const formData = new FormData();
+  formData.append('model', DEFAULT_MODEL);
+  formData.append('prompt', personality.prompt);
+  formData.append('image', dataUrlToSelfieFile(selfieDataUrl));
+  formData.append('size', '1024x1024');
+  formData.append('quality', 'high');
+  formData.append('output_format', 'png');
+  if (DEFAULT_MODEL === 'gpt-image-1.5') {
+    formData.append('input_fidelity', 'high');
   }
 
-  // 2. Direct generation via POST /v1/images/generations
-  const genRes = await fetch('https://api.openai.com/v1/images/generations', {
+  const response = await fetch('https://api.openai.com/v1/images/edits', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      prompt,
-      n: 1,
-      size: '1024x1024',
-      quality: 'high',
-      complexity: 'high',
-      output_format: 'png',
-    }),
+    headers: { Authorization: `Bearer ${apiKey}` },
+    body: formData,
   });
 
-  if (!genRes.ok) {
-    throw new Error('Could not generate your concert avatar right now. Please try again.');
+  if (!response.ok) {
+    throw new Error(`Could not edit your selfie (HTTP ${response.status}). Please try again.`);
   }
 
-  const genData = await genRes.json();
-  return {
-    imageUrl: extractImageFromResponse(genData),
-  };
+  return { imageUrl: extractImageFromResponse(await response.json()) };
 }
 
 /**
