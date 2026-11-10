@@ -64,34 +64,34 @@ function GuestPhotoDownloadView({ photoUrl, personalityId }) {
   };
 
   return (
-    <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[440px] mx-auto px-6 pt-7 pb-9 text-center select-none animate-fadeIn">
+    <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[920px] mx-auto px-[6vw] pt-[3.5vh] pb-[4.5vh] text-center select-none animate-fadeIn">
       {/* Top Branding & Brush Title */}
       <div className="flex flex-col items-center w-full">
         <RuPayHeaderLogo compact />
         <ConcertPersonalityTitle compact />
 
-        <div className="mt-1.5 flex flex-col items-center">
-          <p className="text-[13px] sm:text-[15px] font-extrabold uppercase tracking-[0.06em] text-white leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
+        <div className="mt-[1vh] flex flex-col items-center">
+          <p className="text-[clamp(14px,2.5vw,28px)] font-extrabold uppercase tracking-[0.06em] text-white leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
             YOUR CONCERT AVATAR
           </p>
-          <p className="font-brush text-[22px] sm:text-[26px] uppercase tracking-wider text-gradient-personality leading-tight -rotate-1">
+          <p className="font-brush text-[clamp(24px,4.4vw,48px)] uppercase tracking-wider text-gradient-personality leading-tight -rotate-1">
             IS READY!
           </p>
         </div>
       </div>
 
       {/* Personality Badge + Framed Image Preview */}
-      <div className="w-full flex flex-col items-center my-2">
-        <div className="photobooth-glass rounded-full px-6 py-1.5 mb-3 text-center">
-          <span className="text-[10px] text-purple-200/90 font-medium mr-1.5">
+      <div className="w-full flex flex-col items-center my-[1.5vh]">
+        <div className="photobooth-glass rounded-full px-[5vw] py-[1vh] mb-[2vh] text-center">
+          <span className="text-[clamp(11px,1.8vw,20px)] text-purple-200/90 font-medium mr-2">
             Vibe:
           </span>
-          <span className="text-xs font-extrabold uppercase tracking-wider text-white">
+          <span className="text-[clamp(13px,2.2vw,24px)] font-extrabold uppercase tracking-wider text-white">
             {matchedPersonality.name}
           </span>
         </div>
 
-        <div className="relative w-[96%] aspect-[1.22/1] rounded-[4px] overflow-hidden border-[1.5px] border-purple-400/80 shadow-[0_0_35px_rgba(244,102,181,0.4)] bg-[#12072b]">
+        <div className="relative w-[94%] max-h-[44vh] aspect-[1.22/1] rounded-[6px] overflow-hidden border-[2px] border-purple-400/80 shadow-[0_0_35px_rgba(244,102,181,0.4)] bg-[#12072b]">
           <img
             src={photoUrl}
             alt="Your RuPay Concert Avatar"
@@ -101,14 +101,14 @@ function GuestPhotoDownloadView({ photoUrl, personalityId }) {
       </div>
 
       {/* Download & Share Action Buttons */}
-      <div className="w-full flex flex-col items-center gap-3 mt-2">
+      <div className="w-full flex flex-col items-center gap-[1.8vh] mt-[1vh]">
         <button
           type="button"
           onClick={handleDownload}
           disabled={isDownloading}
-          className="w-[90%] py-4 px-6 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[14px] sm:text-[15px] tracking-[0.06em] uppercase flex items-center justify-center gap-2.5 transition-transform active:scale-95 disabled:opacity-60"
+          className="w-[88%] py-[2.2vh] px-6 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[clamp(14px,2.7vw,28px)] tracking-[0.06em] uppercase flex items-center justify-center gap-3 transition-transform active:scale-95 disabled:opacity-60"
         >
-          <Download className="w-4 h-4 stroke-[2.5]" />
+          <Download className="w-[clamp(18px,3vw,32px)] h-[clamp(18px,3vw,32px)] stroke-[2.5]" />
           <span>{isDownloading ? 'DOWNLOADING...' : 'DOWNLOAD PHOTO'}</span>
         </button>
 
@@ -116,9 +116,9 @@ function GuestPhotoDownloadView({ photoUrl, personalityId }) {
           <button
             type="button"
             onClick={handleNativeShare}
-            className="w-[70%] py-2.5 px-5 rounded-full photobooth-glass hover:border-pink-400/70 text-white font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-2 transition active:scale-95"
+            className="w-[70%] py-[1.5vh] px-5 rounded-full photobooth-glass hover:border-pink-400/70 text-white font-bold text-[clamp(12px,2.1vw,22px)] tracking-wider uppercase flex items-center justify-center gap-2 transition active:scale-95"
           >
-            <Share2 className="w-3.5 h-3.5 text-pink-300" />
+            <Share2 className="w-[clamp(15px,2.5vw,26px)] h-[clamp(15px,2.5vw,26px)] text-pink-300" />
             <span>SHARE PHOTO</span>
           </button>
         )}
@@ -151,11 +151,11 @@ function WelcomeView({ onStart }) {
   ];
 
   return (
-    <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[440px] mx-auto px-6 pt-10 pb-10 text-center select-none animate-fadeIn">
+    <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[920px] mx-auto px-[6vw] pt-[5vh] pb-[5vh] text-center select-none animate-fadeIn">
       {/* Top Branding & Brush Title */}
-      <div className="flex flex-col items-center w-full mt-2">
+      <div className="flex flex-col items-center w-full mt-[1vh]">
         <RuPayHeaderLogo />
-        <div className="mt-3">
+        <div className="mt-[1.5vh]">
           <ConcertPersonalityTitle />
         </div>
       </div>
@@ -164,17 +164,17 @@ function WelcomeView({ onStart }) {
       <div className="flex-1" />
 
       {/* Bottom 4-step box + Start CTA */}
-      <div className="w-full flex flex-col items-center gap-5">
-        <div className="w-full photobooth-glass rounded-[4px] py-4 px-1.5 grid grid-cols-4 divide-x divide-purple-400/35">
+      <div className="w-full flex flex-col items-center gap-[2.6vh]">
+        <div className="w-full photobooth-glass rounded-[6px] py-[2.2vh] px-[1.5vw] grid grid-cols-4 divide-x divide-purple-400/35">
           {steps.map((step, idx) => (
             <div
               key={idx}
-              className="flex flex-col items-center justify-start px-2 text-center"
+              className="flex flex-col items-center justify-start px-[1.5vw] text-center"
             >
-              <div className="h-7 flex items-center justify-center mb-2.5 opacity-95">
+              <div className="flex items-center justify-center mb-[1.2vh] opacity-95">
                 {step.icon}
               </div>
-              <p className="text-[8.5px] sm:text-[9.5px] leading-[1.3] font-bold tracking-[0.04em] text-purple-100/95 uppercase whitespace-pre-line">
+              <p className="text-[clamp(8.5px,1.65vw,18px)] leading-[1.3] font-bold tracking-[0.04em] text-purple-100/95 uppercase whitespace-pre-line">
                 {step.label}
               </p>
             </div>
@@ -184,10 +184,10 @@ function WelcomeView({ onStart }) {
         <button
           type="button"
           onClick={onStart}
-          className="w-[88%] py-4 px-6 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[14px] sm:text-[15.5px] tracking-[0.06em] uppercase flex items-center justify-center gap-3 transition-transform active:scale-95"
+          className="w-[88%] py-[2.2vh] px-6 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[clamp(14px,2.8vw,30px)] tracking-[0.06em] uppercase flex items-center justify-center gap-3 transition-transform active:scale-95"
         >
           <span>START EXPERIENCE</span>
-          <span className="text-lg leading-none font-bold">→</span>
+          <span className="text-[1.2em] leading-none font-bold">→</span>
         </button>
       </div>
     </div>
@@ -204,21 +204,21 @@ function PersonalityView({
   onContinue,
 }) {
   return (
-    <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[440px] mx-auto px-6 pt-6 pb-9 select-none animate-fadeIn">
+    <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[920px] mx-auto px-[6vw] pt-[3.2vh] pb-[4.5vh] select-none animate-fadeIn">
       {/* Top Back Button & Fullscreen Logo Toggle */}
       <div className="w-full flex items-center justify-between">
         <BackButton onClick={onBack} />
         <RuPayHeaderLogo compact />
-        <div className="w-9 sm:w-10" aria-hidden="true" />
+        <div className="w-[clamp(38px,6.5vw,64px)]" aria-hidden="true" />
       </div>
 
       {/* Section Title */}
-      <h2 className="text-[12.5px] sm:text-[14px] font-extrabold tracking-[0.08em] uppercase text-white text-center my-2 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
+      <h2 className="text-[clamp(12.5px,2.4vw,26px)] font-extrabold tracking-[0.08em] uppercase text-white text-center my-[1vh] drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
         CHOOSE YOUR VIBE. OWN THE EDGE.
       </h2>
 
       {/* 6 Personality Cards */}
-      <div className="w-[88%] flex-1 flex flex-col justify-center gap-2.5 my-1">
+      <div className="w-[88%] flex-1 flex flex-col justify-center gap-[1.3vh] my-[0.5vh]">
         {PERSONALITIES.map((item) => {
           const isSelected = selectedPersonality?.id === item.id;
           return (
@@ -226,16 +226,16 @@ function PersonalityView({
               key={item.id}
               type="button"
               onClick={() => onSelectPersonality(item)}
-              className={`w-full py-3 px-4 rounded-[3px] text-center transition-all duration-200 ${
+              className={`w-full py-[1.6vh] px-[3vw] rounded-[5px] text-center transition-all duration-200 ${
                 isSelected
                   ? 'photobooth-glass-active scale-[1.02]'
                   : 'photobooth-glass hover:border-purple-300/80 hover:bg-[#271352]/80'
               }`}
             >
-              <div className="text-[11.5px] sm:text-[13px] font-extrabold uppercase tracking-[0.05em] text-white leading-tight">
+              <div className="text-[clamp(11.5px,2.2vw,24px)] font-extrabold uppercase tracking-[0.05em] text-white leading-tight">
                 {item.name}
               </div>
-              <div className="text-[10px] sm:text-[11px] font-medium text-purple-200/90 leading-[1.28] mt-0.5 whitespace-pre-line">
+              <div className="text-[clamp(10px,1.85vw,20px)] font-medium text-purple-200/90 leading-[1.28] mt-[0.3vh] whitespace-pre-line">
                 {item.subtitle}
               </div>
             </button>
@@ -244,14 +244,14 @@ function PersonalityView({
       </div>
 
       {/* Bottom CTA Button */}
-      <div className="w-full flex justify-center mt-2">
+      <div className="w-full flex justify-center mt-[1vh]">
         <button
           type="button"
           onClick={onContinue}
-          className="w-[90%] py-4 px-6 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[14px] sm:text-[15px] tracking-[0.05em] uppercase flex items-center justify-center gap-2.5 transition-transform active:scale-95"
+          className="w-[90%] py-[2.2vh] px-6 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[clamp(14px,2.7vw,28px)] tracking-[0.05em] uppercase flex items-center justify-center gap-3 transition-transform active:scale-95"
         >
           <span>CONTINUE TO CAMERA</span>
-          <span className="text-lg leading-none font-bold">→</span>
+          <span className="text-[1.2em] leading-none font-bold">→</span>
         </button>
       </div>
     </div>
@@ -367,26 +367,26 @@ function CameraView({
   };
 
   return (
-    <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[440px] mx-auto px-6 pt-6 pb-8 select-none animate-fadeIn">
+    <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[920px] mx-auto px-[6vw] pt-[3.2vh] pb-[4.2vh] select-none animate-fadeIn">
       {/* Top Back Button & Fullscreen Logo Toggle */}
       <div className="w-full flex items-center justify-between">
         <BackButton onClick={onBack} disabled={isGenerating} />
         <RuPayHeaderLogo compact />
-        <div className="w-9 sm:w-10" aria-hidden="true" />
+        <div className="w-[clamp(38px,6.5vw,64px)]" aria-hidden="true" />
       </div>
 
       {/* Selected Personality Pill */}
-      <div className="photobooth-glass rounded-full px-9 py-2.5 text-center min-w-[230px] -mt-1">
-        <div className="text-[11px] sm:text-[12px] font-medium text-purple-200/90 leading-tight">
+      <div className="photobooth-glass rounded-full px-[7vw] py-[1.3vh] text-center min-w-[52%]">
+        <div className="text-[clamp(11px,1.9vw,20px)] font-medium text-purple-200/90 leading-tight">
           Selected Personality:
         </div>
-        <div className="text-[15px] sm:text-[17px] font-extrabold uppercase tracking-[0.04em] text-white leading-snug mt-0.5">
+        <div className="text-[clamp(15px,2.8vw,30px)] font-extrabold uppercase tracking-[0.04em] text-white leading-snug mt-0.5">
           {selectedPersonality?.name || 'FOODIE'}
         </div>
       </div>
 
       {/* Center Black Square/Portrait Viewfinder Frame */}
-      <div className="relative w-[90%] aspect-[1/1.08] bg-black rounded-[2px] overflow-hidden shadow-[0_12px_35px_rgba(0,0,0,0.85)] border border-purple-500/30 flex items-center justify-center my-2">
+      <div className="relative w-[90%] max-h-[55vh] aspect-[1/1.08] bg-black rounded-[4px] overflow-hidden shadow-[0_12px_35px_rgba(0,0,0,0.85)] border border-purple-500/30 flex items-center justify-center my-[1vh]">
         {!capturedSelfie && (
           <video
             ref={videoRef}
@@ -410,18 +410,18 @@ function CameraView({
 
         {!capturedSelfie && !cameraReady && (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-black">
-            <div className="w-14 h-14 rounded-full bg-purple-950/60 border border-purple-500/40 flex items-center justify-center mb-3 text-purple-300">
-              <Camera className="w-6 h-6" />
+            <div className="w-[clamp(56px,10vw,96px)] h-[clamp(56px,10vw,96px)] rounded-full bg-purple-950/60 border border-purple-500/40 flex items-center justify-center mb-4 text-purple-300">
+              <Camera className="w-[45%] h-[45%]" />
             </div>
-            <p className="text-xs text-purple-200/80 font-medium max-w-[220px] mb-4">
+            <p className="text-[clamp(12px,2vw,20px)] text-purple-200/80 font-medium max-w-[75%] mb-4">
               {cameraError || 'Center your face and look toward the camera.'}
             </p>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2 rounded-full bg-purple-900/70 hover:bg-purple-800/80 border border-purple-400/50 text-xs font-bold uppercase tracking-wider text-purple-100 flex items-center gap-2 transition"
+              className="px-[4vw] py-[1.2vh] rounded-full bg-purple-900/70 hover:bg-purple-800/80 border border-purple-400/50 text-[clamp(12px,2vw,20px)] font-bold uppercase tracking-wider text-purple-100 flex items-center gap-2 transition"
             >
-              <Upload className="w-3.5 h-3.5" />
+              <Upload className="w-[clamp(14px,2.2vw,22px)] h-[clamp(14px,2.2vw,22px)]" />
               <span>Upload Photo</span>
             </button>
           </div>
@@ -429,7 +429,7 @@ function CameraView({
 
         {!capturedSelfie && cameraReady && (
           <div className="absolute inset-0 pointer-events-none">
-            <p className="absolute top-3 inset-x-3 text-center text-[11px] text-white bg-black/65 rounded-full px-2 py-1">
+            <p className="absolute top-3 inset-x-4 text-center text-[clamp(11px,1.8vw,18px)] text-white bg-black/65 rounded-full px-3 py-1">
               Fit one face inside the oval and face the light.
             </p>
             <div
@@ -443,9 +443,9 @@ function CameraView({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="absolute bottom-3 right-3 px-3 py-1.5 rounded-full bg-black/65 hover:bg-black/85 border border-white/20 text-[10px] font-semibold uppercase tracking-wider text-white/90 flex items-center gap-1.5 backdrop-blur-sm transition"
+            className="absolute bottom-3 right-3 px-3.5 py-1.5 rounded-full bg-black/65 hover:bg-black/85 border border-white/20 text-[clamp(10px,1.6vw,16px)] font-semibold uppercase tracking-wider text-white/90 flex items-center gap-1.5 backdrop-blur-sm transition"
           >
-            <Upload className="w-3 h-3" />
+            <Upload className="w-[clamp(12px,1.8vw,18px)] h-[clamp(12px,1.8vw,18px)]" />
             <span>Upload</span>
           </button>
         )}
@@ -456,14 +456,14 @@ function CameraView({
 
         {isGenerating && (
           <div className="absolute inset-0 z-20 bg-[#0d0522]/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
-            <div className="relative mb-4">
-              <div className="w-16 h-16 rounded-full border-2 border-pink-500/30 border-t-cyan-300 animate-spin" />
-              <Sparkles className="w-7 h-7 text-pink-400 absolute inset-0 m-auto animate-pulse" />
+            <div className="relative mb-5">
+              <div className="w-[clamp(64px,11vw,110px)] h-[clamp(64px,11vw,110px)] rounded-full border-4 border-pink-500/30 border-t-cyan-300 animate-spin" />
+              <Sparkles className="w-[42%] h-[42%] text-pink-400 absolute inset-0 m-auto animate-pulse" />
             </div>
-            <p className="text-sm font-extrabold uppercase tracking-wider text-white mb-1">
+            <p className="text-[clamp(14px,2.5vw,26px)] font-extrabold uppercase tracking-wider text-white mb-1.5">
               Creating Your Concert Avatar...
             </p>
-            <p className="text-xs text-purple-200/85 max-w-[230px] leading-relaxed">
+            <p className="text-[clamp(12px,2vw,20px)] text-purple-200/85 max-w-[75%] leading-relaxed">
               {generationStepText || `Styling your ${selectedPersonality?.name} vibe...`}
             </p>
           </div>
@@ -472,11 +472,11 @@ function CameraView({
         {errorMsg && !isGenerating && (
           <div
             role="alert"
-            className="absolute inset-x-3 bottom-3 z-20 bg-[#230b38]/95 border border-pink-500/70 rounded-md p-3 text-left shadow-lg"
+            className="absolute inset-x-3 bottom-3 z-20 bg-[#230b38]/95 border border-pink-500/70 rounded-md p-3.5 text-left shadow-lg"
           >
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-pink-400 shrink-0 mt-0.5" />
-              <p className="text-xs font-bold text-pink-200 leading-snug">
+            <div className="flex items-start gap-2.5">
+              <AlertCircle className="w-5 h-5 text-pink-400 shrink-0 mt-0.5" />
+              <p className="text-[clamp(12px,1.9vw,18px)] font-bold text-pink-200 leading-snug">
                 {errorMsg}
               </p>
             </div>
@@ -493,7 +493,7 @@ function CameraView({
       </div>
 
       {/* Bottom Camera Controls: RETAKE | SHUTTER | SUBMIT */}
-      <div className="w-[92%] flex items-center justify-between gap-3 mt-1">
+      <div className="w-[92%] flex items-center justify-between gap-[3vw] mt-[0.5vh]">
         <button
           type="button"
           onClick={() => {
@@ -501,9 +501,9 @@ function CameraView({
             setCameraAttempt((attempt) => attempt + 1);
           }}
           disabled={isGenerating}
-          className="flex-1 py-2.5 px-4 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[11.5px] sm:text-[12.5px] tracking-[0.04em] uppercase flex items-center justify-center gap-1.5 transition-transform active:scale-95 disabled:opacity-50"
+          className="flex-1 py-[1.6vh] px-4 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[clamp(11.5px,2.2vw,23px)] tracking-[0.04em] uppercase flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50"
         >
-          <span className="text-sm leading-none">↻</span>
+          <span className="text-[1.15em] leading-none">↻</span>
           <span>RETAKE</span>
         </button>
 
@@ -512,7 +512,7 @@ function CameraView({
           onClick={handleShutterClick}
           disabled={isGenerating}
           aria-label="Take Photo"
-          className="w-16 h-16 rounded-full shutter-ring p-1 shadow-[0_0_22px_rgba(167,220,255,0.65)] transition-transform active:scale-90 shrink-0 disabled:opacity-50"
+          className="w-[clamp(64px,11.5vw,116px)] h-[clamp(64px,11.5vw,116px)] rounded-full shutter-ring p-[4px] shadow-[0_0_24px_rgba(167,220,255,0.65)] transition-transform active:scale-90 shrink-0 disabled:opacity-50"
         >
           <div className="w-full h-full rounded-full bg-[#a8ccf0] hover:bg-[#bad8f7] border-2 border-white/80 transition-colors" />
         </button>
@@ -521,9 +521,9 @@ function CameraView({
           type="button"
           onClick={onSubmit}
           disabled={!capturedSelfie || isGenerating}
-          className="flex-1 py-2.5 px-4 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[11.5px] sm:text-[12.5px] tracking-[0.04em] uppercase flex items-center justify-center gap-1.5 transition-transform active:scale-95 disabled:opacity-50"
+          className="flex-1 py-[1.6vh] px-4 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[clamp(11.5px,2.2vw,23px)] tracking-[0.04em] uppercase flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50"
         >
-          <span className="text-xs leading-none">&gt;</span>
+          <span className="text-[1.05em] leading-none">&gt;</span>
           <span>SUBMIT</span>
         </button>
       </div>
@@ -549,7 +549,6 @@ function ResultView({
     let active = true;
     const generateQr = async () => {
       try {
-        // Point QR code to our branded Guest Photo Download Web Page with the Cloudinary URL
         const shareUrl = cloudinaryUrl
           ? `${window.location.origin}/?photo=${encodeURIComponent(
               cloudinaryUrl
@@ -559,7 +558,7 @@ function ResultView({
             )}`;
 
         const url = await QRCode.toDataURL(shareUrl, {
-          width: 240,
+          width: 280,
           margin: 1,
           color: {
             dark: '#000000',
@@ -602,24 +601,24 @@ function ResultView({
   };
 
   return (
-    <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[440px] mx-auto px-6 pt-7 pb-8 text-center select-none animate-fadeIn">
+    <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[920px] mx-auto px-[6vw] pt-[3.5vh] pb-[4.2vh] text-center select-none animate-fadeIn">
       {/* Top Branding & Brush Title */}
       <div className="flex flex-col items-center w-full">
         <RuPayHeaderLogo compact />
         <ConcertPersonalityTitle compact />
 
-        <div className="mt-1.5 flex flex-col items-center">
-          <p className="text-[14px] sm:text-[15.5px] font-extrabold uppercase tracking-[0.06em] text-white leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
+        <div className="mt-[0.8vh] flex flex-col items-center">
+          <p className="text-[clamp(14px,2.6vw,28px)] font-extrabold uppercase tracking-[0.06em] text-white leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
             YOUR CONCERT AVATAR
           </p>
-          <p className="font-brush text-[24px] sm:text-[27px] uppercase tracking-wider text-gradient-personality leading-tight -rotate-1">
+          <p className="font-brush text-[clamp(24px,4.5vw,48px)] uppercase tracking-wider text-gradient-personality leading-tight -rotate-1">
             IS READY!
           </p>
         </div>
       </div>
 
       {/* Framed Generated Concert Avatar */}
-      <div className="relative w-[94%] aspect-[1.22/1] rounded-[3px] overflow-hidden border-[1.5px] border-purple-400/80 shadow-[0_0_32px_rgba(244,102,181,0.35)] my-2 bg-[#12072b]">
+      <div className="relative w-[94%] max-h-[42vh] aspect-[1.22/1] rounded-[5px] overflow-hidden border-[2px] border-purple-400/80 shadow-[0_0_32px_rgba(244,102,181,0.35)] my-[1vh] bg-[#12072b]">
         <img
           src={displayImage}
           alt="Your Concert Avatar"
@@ -629,8 +628,8 @@ function ResultView({
       </div>
 
       {/* QR Code & Download Box */}
-      <div className="w-[82%] photobooth-glass rounded-[4px] p-3 flex items-center justify-between gap-3.5">
-        <div className="w-16 h-16 sm:w-[72px] sm:h-[72px] bg-white p-1 rounded-[2px] shrink-0 flex items-center justify-center shadow-inner">
+      <div className="w-[82%] photobooth-glass rounded-[6px] p-[1.8vh] flex items-center justify-between gap-[3vw]">
+        <div className="w-[clamp(64px,12.5vw,136px)] h-[clamp(64px,12.5vw,136px)] bg-white p-1.5 rounded-[4px] shrink-0 flex items-center justify-center shadow-inner">
           {qrDataUrl ? (
             <img
               src={qrDataUrl}
@@ -648,23 +647,22 @@ function ResultView({
           className="flex-1 flex flex-col items-center justify-center text-center group cursor-pointer py-1"
           title="Download your concert photo"
         >
-          <div className="w-7 h-7 flex items-center justify-center text-purple-200 group-hover:text-pink-300 group-hover:translate-y-0.5 transition-all mb-1">
+          <div className="w-[clamp(24px,4.2vw,44px)] h-[clamp(24px,4.2vw,44px)] flex items-center justify-center text-purple-200 group-hover:text-pink-300 group-hover:translate-y-0.5 transition-all mb-1.5">
             <svg
-              width="20"
-              height="20"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              className="w-full h-full"
             >
               <path d="M12 3v12" />
               <path d="m7 10 5 5 5-5" />
               <path d="M5 21h14" />
             </svg>
           </div>
-          <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.05em] text-white group-hover:text-pink-200 leading-[1.3] whitespace-pre-line">
+          <span className="text-[clamp(9.5px,1.8vw,20px)] font-extrabold uppercase tracking-[0.05em] text-white group-hover:text-pink-200 leading-[1.3] whitespace-pre-line">
             {isDownloading ? 'PREPARING PHOTO...' : 'SCAN TO DOWNLOAD\nYOUR PHOTO'}
           </span>
         </button>
@@ -674,17 +672,16 @@ function ResultView({
       <button
         type="button"
         onClick={onDone}
-        className="mt-1 px-9 py-2.5 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[12px] sm:text-[13px] tracking-[0.05em] uppercase flex items-center justify-center gap-2 transition-transform active:scale-95"
+        className="mt-[0.5vh] px-[7vw] py-[1.6vh] rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[clamp(12px,2.2vw,24px)] tracking-[0.05em] uppercase flex items-center justify-center gap-2.5 transition-transform active:scale-95"
       >
         <svg
-          width="14"
-          height="14"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
           strokeWidth="2.4"
           strokeLinecap="round"
           strokeLinejoin="round"
+          className="w-[clamp(14px,2.4vw,26px)] h-[clamp(14px,2.4vw,26px)]"
         >
           <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
           <polyline points="9 22 9 12 15 12 15 22" />
@@ -759,18 +756,10 @@ export default function App() {
   };
 
   return (
-    <div className="relative w-full h-[100dvh] bg-[#080316] text-white overflow-hidden flex items-center justify-center">
-      {/* Ambient blurred concert backdrop for wide desktop screens */}
-      <img
-        src="/assets/concert-bg.jpg"
-        alt=""
-        aria-hidden="true"
-        className="fixed inset-0 w-full h-full object-cover object-center blur-2xl scale-110 opacity-45 pointer-events-none select-none"
-      />
-
-      {/* Main Photobooth Kiosk Canvas */}
-      <main className="relative w-full h-full sm:max-w-[460px] bg-[#0c0521] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.9)]">
-        {/* Sharp Concert Stage Background */}
+    <div className="relative w-screen h-[100dvh] bg-[#0c0521] text-white overflow-hidden">
+      {/* Full-Bleed Edge-to-Edge Photobooth Canvas */}
+      <main className="relative w-full h-full bg-[#0c0521] overflow-hidden">
+        {/* Sharp Concert Stage Background Filling 100% Width & Height */}
         <img
           src="/assets/concert-bg.jpg"
           alt=""
