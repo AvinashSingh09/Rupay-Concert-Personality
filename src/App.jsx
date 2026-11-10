@@ -1,6 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import QRCode from 'qrcode';
-import { Camera, Upload, Sparkles, AlertCircle, Download, Share2 } from 'lucide-react';
+import {
+  Camera,
+  Upload,
+  Sparkles,
+  AlertCircle,
+  Download,
+  Share2,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import { PERSONALITIES } from './data/personalities';
 import {
   RuPayHeaderLogo,
@@ -17,6 +28,134 @@ import {
   uploadAvatarToCloudinary,
   downloadPhotoToDevice,
 } from './services/cloudinaryService';
+
+const ADMIN_ID = (import.meta.env.VITE_ADMIN_ID || 'rupayadmin').trim();
+const ADMIN_PASSWORD = (import.meta.env.VITE_ADMIN_PASSWORD || 'RuPay@2026').trim();
+const AUTH_STORAGE_KEY = 'rupay_photobooth_auth_v1';
+
+/**
+ * Admin / Team Login Gate to protect the Photobooth from unauthorized public use
+ */
+function AdminLoginView({ onLoginSuccess }) {
+  const [adminId, setAdminId] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (adminId.trim() === ADMIN_ID && password === ADMIN_PASSWORD) {
+      setError('');
+      localStorage.setItem(AUTH_STORAGE_KEY, 'authenticated');
+      onLoginSuccess();
+    } else {
+      setError('Invalid Admin ID or Password. Please try again.');
+    }
+  };
+
+  return (
+    <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[920px] mx-auto px-[6vw] pt-[5vh] pb-[5vh] text-center select-none animate-fadeIn">
+      {/* Top Branding & Brush Title */}
+      <div className="flex flex-col items-center w-full mt-[1vh]">
+        <RuPayHeaderLogo />
+        <div className="mt-[1.5vh]">
+          <ConcertPersonalityTitle />
+        </div>
+      </div>
+
+      {/* Center Frosted Login Card */}
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-[520px] photobooth-glass rounded-[8px] p-[3.5vh] px-[5vw] flex flex-col items-center gap-[2vh] my-auto shadow-2xl"
+      >
+        <div className="w-[clamp(44px,7.5vw,72px)] h-[clamp(44px,7.5vw,72px)] rounded-full bg-purple-900/60 border border-purple-400/50 flex items-center justify-center text-pink-300 mb-[0.5vh]">
+          <Lock className="w-[48%] h-[48%]" />
+        </div>
+
+        <div>
+          <h2 className="text-[clamp(14px,2.6vw,26px)] font-extrabold uppercase tracking-[0.08em] text-white">
+            TEAM ACCESS LOGIN
+          </h2>
+          <p className="text-[clamp(11px,1.8vw,17px)] text-purple-200/80 mt-1">
+            Enter your Admin credentials to unlock the photobooth
+          </p>
+        </div>
+
+        {error && (
+          <div
+            role="alert"
+            className="w-full bg-[#2a0c3d]/95 border border-pink-500/70 rounded-[5px] p-3 flex items-center gap-2 text-left"
+          >
+            <AlertCircle className="w-4 h-4 text-pink-400 shrink-0" />
+            <span className="text-[clamp(11px,1.8vw,16px)] font-bold text-pink-200">
+              {error}
+            </span>
+          </div>
+        )}
+
+        {/* Admin ID Input */}
+        <div className="w-full text-left">
+          <label className="block text-[clamp(10px,1.7vw,16px)] font-bold uppercase tracking-wider text-purple-200 mb-1.5">
+            Admin ID
+          </label>
+          <div className="relative flex items-center">
+            <User className="w-[clamp(16px,2.4vw,22px)] h-[clamp(16px,2.4vw,22px)] text-purple-300/70 absolute left-3.5 pointer-events-none" />
+            <input
+              type="text"
+              value={adminId}
+              onChange={(e) => setAdminId(e.target.value)}
+              placeholder="Enter Admin ID"
+              autoComplete="username"
+              required
+              className="w-full pl-11 pr-4 py-[1.5vh] rounded-[5px] bg-[#0e0526]/90 border border-purple-400/50 text-white placeholder-purple-300/40 text-[clamp(13px,2.1vw,20px)] focus:outline-none focus:border-pink-400 transition"
+            />
+          </div>
+        </div>
+
+        {/* Password Input */}
+        <div className="w-full text-left">
+          <label className="block text-[clamp(10px,1.7vw,16px)] font-bold uppercase tracking-wider text-purple-200 mb-1.5">
+            Password
+          </label>
+          <div className="relative flex items-center">
+            <Lock className="w-[clamp(16px,2.4vw,22px)] h-[clamp(16px,2.4vw,22px)] text-purple-300/70 absolute left-3.5 pointer-events-none" />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter Password"
+              autoComplete="current-password"
+              required
+              className="w-full pl-11 pr-11 py-[1.5vh] rounded-[5px] bg-[#0e0526]/90 border border-purple-400/50 text-white placeholder-purple-300/40 text-[clamp(13px,2.1vw,20px)] focus:outline-none focus:border-pink-400 transition"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute right-3.5 text-purple-300/75 hover:text-white transition"
+            >
+              {showPassword ? (
+                <EyeOff className="w-[clamp(16px,2.4vw,22px)] h-[clamp(16px,2.4vw,22px)]" />
+              ) : (
+                <Eye className="w-[clamp(16px,2.4vw,22px)] h-[clamp(16px,2.4vw,22px)]" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          className="w-full mt-[1vh] py-[2vh] px-6 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[clamp(14px,2.5vw,26px)] tracking-[0.06em] uppercase flex items-center justify-center gap-2.5 transition-transform active:scale-95"
+        >
+          <span>UNLOCK PHOTOBOOTH</span>
+          <span className="text-[1.2em] leading-none font-bold">→</span>
+        </button>
+      </form>
+
+      <div className="h-[1vh]" />
+    </div>
+  );
+}
 
 /**
  * Guest Mobile Landing Page (opened when scanning the QR code on a user's phone)
@@ -701,6 +840,12 @@ export default function App() {
   const sharedPhotoUrl = searchParams?.get('photo');
   const sharedVibeId = searchParams?.get('vibe') || 'foodie';
 
+  // Admin authentication state for the photobooth
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(AUTH_STORAGE_KEY) === 'authenticated';
+  });
+
   const [step, setStep] = useState(1);
   const [selectedPersonality, setSelectedPersonality] = useState(PERSONALITIES[4]);
   const [capturedSelfie, setCapturedSelfie] = useState(null);
@@ -777,10 +922,14 @@ export default function App() {
         />
 
         {sharedPhotoUrl ? (
+          /* Guests who scan the QR code can ONLY view & download their photo */
           <GuestPhotoDownloadView
             photoUrl={sharedPhotoUrl}
             personalityId={sharedVibeId}
           />
+        ) : !isAuthenticated ? (
+          /* Team Admin Login Gate protects the photobooth from public access */
+          <AdminLoginView onLoginSuccess={() => setIsAuthenticated(true)} />
         ) : (
           <>
             {step === 1 && <WelcomeView onStart={() => setStep(2)} />}

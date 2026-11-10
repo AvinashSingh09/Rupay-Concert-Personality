@@ -15,6 +15,10 @@ services:
         value: RupayConcertPersonality
       - key: VITE_CLOUDINARY_FOLDER
         value: RupayConcertPersonality
+      - key: VITE_ADMIN_ID
+        value: rupayadmin
+      - key: VITE_ADMIN_PASSWORD
+        value: RuPay@2026
     routes:
       - type: rewrite
         source: /*
