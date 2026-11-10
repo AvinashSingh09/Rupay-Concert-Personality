@@ -2,19 +2,62 @@ import React from 'react';
 import rupayLogo from '../assets/rupay-on.png';
 
 /**
- * RuPay + "Own the edge" header logo lockup matching Screen 1 and Screen 4
+ * Toggles browser Fullscreen mode (hides Chrome URL bar & browser navigation chrome)
  */
-export function RuPayHeaderLogo({ compact = false }) {
+export async function toggleFullscreen() {
+  try {
+    const doc = document;
+    const elem = doc.documentElement;
+    const isFullscreen =
+      doc.fullscreenElement ||
+      doc.webkitFullscreenElement ||
+      doc.mozFullScreenElement ||
+      doc.msFullscreenElement;
+
+    if (!isFullscreen) {
+      if (elem.requestFullscreen) {
+        await elem.requestFullscreen();
+      } else if (elem.webkitRequestFullscreen) {
+        await elem.webkitRequestFullscreen();
+      } else if (elem.msRequestFullscreen) {
+        await elem.msRequestFullscreen();
+      }
+    } else {
+      if (doc.exitFullscreen) {
+        await doc.exitFullscreen();
+      } else if (doc.webkitExitFullscreen) {
+        await doc.webkitExitFullscreen();
+      } else if (doc.msExitFullscreen) {
+        await doc.msExitFullscreen();
+      }
+    }
+  } catch (err) {
+    console.warn('Fullscreen toggle failed:', err);
+  }
+}
+
+/**
+ * RuPay + "Own the edge" header logo lockup — acts as a button to toggle Fullscreen mode
+ */
+export function RuPayHeaderLogo({ compact = false, className = '' }) {
   return (
-    <img
-      src={rupayLogo}
-      alt="RuPay — Own the edge"
-      width={640}
-      height={275}
-      className={`h-auto select-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] ${
-        compact ? 'w-28 sm:w-[124px]' : 'w-[122px] sm:w-[132px]'
-      }`}
-    />
+    <button
+      type="button"
+      onClick={toggleFullscreen}
+      aria-label="Toggle Fullscreen Mode"
+      title="Tap to toggle fullscreen"
+      className={`inline-flex items-center justify-center bg-transparent border-0 p-0 cursor-pointer transition-transform active:scale-95 focus:outline-none ${className}`}
+    >
+      <img
+        src={rupayLogo}
+        alt="RuPay — Own the edge"
+        width={640}
+        height={275}
+        className={`h-auto select-none pointer-events-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] ${
+          compact ? 'w-28 sm:w-[124px]' : 'w-[122px] sm:w-[132px]'
+        }`}
+      />
+    </button>
   );
 }
 

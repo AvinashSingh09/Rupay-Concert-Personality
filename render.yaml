@@ -9,6 +9,12 @@ services:
         sync: false
       - key: VITE_OPENAI_IMAGE_MODEL
         value: gpt-image-2.6-sunburst
+      - key: VITE_CLOUDINARY_CLOUD_NAME
+        value: dmine8ovl
+      - key: VITE_CLOUDINARY_UPLOAD_PRESET
+        value: RupayConcertPersonality
+      - key: VITE_CLOUDINARY_FOLDER
+        value: RupayConcertPersonality
     routes:
       - type: rewrite
         source: /*

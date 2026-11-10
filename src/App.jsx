@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import QRCode from 'qrcode';
-import { Camera, Upload, Sparkles, AlertCircle } from 'lucide-react';
+import { Camera, Upload, Sparkles, AlertCircle, Download, Share2 } from 'lucide-react';
 import { PERSONALITIES } from './data/personalities';
 import {
   RuPayHeaderLogo,
@@ -13,6 +13,119 @@ import {
   generateConcertAvatar,
   createBrandedDownloadDataUrl,
 } from './services/openaiImageService';
+import {
+  uploadAvatarToCloudinary,
+  downloadPhotoToDevice,
+} from './services/cloudinaryService';
+
+/**
+ * Guest Mobile Landing Page (opened when scanning the QR code on a user's phone)
+ * URL format: /?photo=<cloudinary_secure_url>&vibe=<personality_id>
+ */
+function GuestPhotoDownloadView({ photoUrl, personalityId }) {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const matchedPersonality =
+    PERSONALITIES.find((p) => p.id === personalityId) || PERSONALITIES[4];
+
+  const filename = `RuPay-Concert-Avatar-${matchedPersonality.id}.png`;
+
+  const handleDownload = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      await downloadPhotoToDevice(photoUrl, filename);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleNativeShare = async () => {
+    try {
+      const response = await fetch(photoUrl, { mode: 'cors' });
+      const blob = await response.blob();
+      const file = new File([blob], filename, { type: blob.type || 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'My RuPay Concert Personality Avatar',
+          text: `Check out my ${matchedPersonality.name} Concert Avatar! #RuPay #OwnTheEdge`,
+          files: [file],
+        });
+        return;
+      }
+      if (navigator.share) {
+        await navigator.share({
+          title: 'My RuPay Concert Personality Avatar',
+          url: window.location.href,
+        });
+      }
+    } catch {
+      // User cancelled share sheet
+    }
+  };
+
+  return (
+    <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[440px] mx-auto px-6 pt-7 pb-9 text-center select-none animate-fadeIn">
+      {/* Top Branding & Brush Title */}
+      <div className="flex flex-col items-center w-full">
+        <RuPayHeaderLogo compact />
+        <ConcertPersonalityTitle compact />
+
+        <div className="mt-1.5 flex flex-col items-center">
+          <p className="text-[13px] sm:text-[15px] font-extrabold uppercase tracking-[0.06em] text-white leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
+            YOUR CONCERT AVATAR
+          </p>
+          <p className="font-brush text-[22px] sm:text-[26px] uppercase tracking-wider text-gradient-personality leading-tight -rotate-1">
+            IS READY!
+          </p>
+        </div>
+      </div>
+
+      {/* Personality Badge + Framed Image Preview */}
+      <div className="w-full flex flex-col items-center my-2">
+        <div className="photobooth-glass rounded-full px-6 py-1.5 mb-3 text-center">
+          <span className="text-[10px] text-purple-200/90 font-medium mr-1.5">
+            Vibe:
+          </span>
+          <span className="text-xs font-extrabold uppercase tracking-wider text-white">
+            {matchedPersonality.name}
+          </span>
+        </div>
+
+        <div className="relative w-[96%] aspect-[1.22/1] rounded-[4px] overflow-hidden border-[1.5px] border-purple-400/80 shadow-[0_0_35px_rgba(244,102,181,0.4)] bg-[#12072b]">
+          <img
+            src={photoUrl}
+            alt="Your RuPay Concert Avatar"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      </div>
+
+      {/* Download & Share Action Buttons */}
+      <div className="w-full flex flex-col items-center gap-3 mt-2">
+        <button
+          type="button"
+          onClick={handleDownload}
+          disabled={isDownloading}
+          className="w-[90%] py-4 px-6 rounded-full bg-rupay-pill text-[#160836] font-extrabold text-[14px] sm:text-[15px] tracking-[0.06em] uppercase flex items-center justify-center gap-2.5 transition-transform active:scale-95 disabled:opacity-60"
+        >
+          <Download className="w-4 h-4 stroke-[2.5]" />
+          <span>{isDownloading ? 'DOWNLOADING...' : 'DOWNLOAD PHOTO'}</span>
+        </button>
+
+        {typeof navigator !== 'undefined' && navigator.share && (
+          <button
+            type="button"
+            onClick={handleNativeShare}
+            className="w-[70%] py-2.5 px-5 rounded-full photobooth-glass hover:border-pink-400/70 text-white font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-2 transition active:scale-95"
+          >
+            <Share2 className="w-3.5 h-3.5 text-pink-300" />
+            <span>SHARE PHOTO</span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 /**
  * Step 1: Welcome / Start Experience
@@ -92,9 +205,11 @@ function PersonalityView({
 }) {
   return (
     <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[440px] mx-auto px-6 pt-6 pb-9 select-none animate-fadeIn">
-      {/* Top Back Button */}
-      <div className="w-full flex items-center justify-start">
+      {/* Top Back Button & Fullscreen Logo Toggle */}
+      <div className="w-full flex items-center justify-between">
         <BackButton onClick={onBack} />
+        <RuPayHeaderLogo compact />
+        <div className="w-9 sm:w-10" aria-hidden="true" />
       </div>
 
       {/* Section Title */}
@@ -154,6 +269,7 @@ function CameraView({
   onSubmit,
   onBack,
   isGenerating,
+  generationStepText,
   errorMsg,
 }) {
   const videoRef = useRef(null);
@@ -187,7 +303,10 @@ function CameraView({
           stream.getTracks().forEach((track) => track.stop());
         }
       } catch {
-        if (active) setCameraError('Camera unavailable. Upload a well-lit, front-facing selfie of one person.');
+        if (active)
+          setCameraError(
+            'Camera unavailable. Upload a well-lit, front-facing selfie of one person.'
+          );
       }
     };
     startCamera();
@@ -226,7 +345,7 @@ function CameraView({
       0,
       0,
       canvas.width,
-      canvas.height,
+      canvas.height
     );
 
     setFlashActive(true);
@@ -249,9 +368,11 @@ function CameraView({
 
   return (
     <div className="relative z-10 flex flex-col items-center justify-between w-full h-full max-w-[440px] mx-auto px-6 pt-6 pb-8 select-none animate-fadeIn">
-      {/* Top Back Button */}
-      <div className="w-full flex items-center justify-start">
+      {/* Top Back Button & Fullscreen Logo Toggle */}
+      <div className="w-full flex items-center justify-between">
         <BackButton onClick={onBack} disabled={isGenerating} />
+        <RuPayHeaderLogo compact />
+        <div className="w-9 sm:w-10" aria-hidden="true" />
       </div>
 
       {/* Selected Personality Pill */}
@@ -343,13 +464,16 @@ function CameraView({
               Creating Your Concert Avatar...
             </p>
             <p className="text-xs text-purple-200/85 max-w-[230px] leading-relaxed">
-              Styling your {selectedPersonality?.name} vibe...
+              {generationStepText || `Styling your ${selectedPersonality?.name} vibe...`}
             </p>
           </div>
         )}
 
         {errorMsg && !isGenerating && (
-          <div role="alert" className="absolute inset-x-3 bottom-3 z-20 bg-[#230b38]/95 border border-pink-500/70 rounded-md p-3 text-left shadow-lg">
+          <div
+            role="alert"
+            className="absolute inset-x-3 bottom-3 z-20 bg-[#230b38]/95 border border-pink-500/70 rounded-md p-3 text-left shadow-lg"
+          >
             <div className="flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-pink-400 shrink-0 mt-0.5" />
               <p className="text-xs font-bold text-pink-200 leading-snug">
@@ -410,7 +534,12 @@ function CameraView({
 /**
  * Step 4: Result / Avatar Ready
  */
-function ResultView({ generatedAvatar, selectedPersonality, onDone }) {
+function ResultView({
+  generatedAvatar,
+  cloudinaryUrl,
+  selectedPersonality,
+  onDone,
+}) {
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -420,11 +549,17 @@ function ResultView({ generatedAvatar, selectedPersonality, onDone }) {
     let active = true;
     const generateQr = async () => {
       try {
-        const shareUrl = `${window.location.origin}/?avatar=${encodeURIComponent(
-          selectedPersonality?.id || 'foodie'
-        )}`;
+        // Point QR code to our branded Guest Photo Download Web Page with the Cloudinary URL
+        const shareUrl = cloudinaryUrl
+          ? `${window.location.origin}/?photo=${encodeURIComponent(
+              cloudinaryUrl
+            )}&vibe=${encodeURIComponent(selectedPersonality?.id || 'foodie')}`
+          : `${window.location.origin}/?vibe=${encodeURIComponent(
+              selectedPersonality?.id || 'foodie'
+            )}`;
+
         const url = await QRCode.toDataURL(shareUrl, {
-          width: 200,
+          width: 240,
           margin: 1,
           color: {
             dark: '#000000',
@@ -440,21 +575,27 @@ function ResultView({ generatedAvatar, selectedPersonality, onDone }) {
     return () => {
       active = false;
     };
-  }, [selectedPersonality]);
+  }, [cloudinaryUrl, selectedPersonality]);
 
   const handleDownloadPhoto = async () => {
     if (isDownloading) return;
     setIsDownloading(true);
     try {
-      const brandedDataUrl = await createBrandedDownloadDataUrl(displayImage);
-      const link = document.createElement('a');
-      link.href = brandedDataUrl;
-      link.download = `RuPay-Concert-Avatar-${(
+      const filename = `RuPay-Concert-Avatar-${(
         selectedPersonality?.id || 'foodie'
       ).toLowerCase()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+
+      if (cloudinaryUrl) {
+        await downloadPhotoToDevice(cloudinaryUrl, filename);
+      } else {
+        const brandedDataUrl = await createBrandedDownloadDataUrl(displayImage);
+        const link = document.createElement('a');
+        link.href = brandedDataUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
     } finally {
       setIsDownloading(false);
     }
@@ -555,11 +696,21 @@ function ResultView({ generatedAvatar, selectedPersonality, onDone }) {
 }
 
 export default function App() {
+  // Check if opened via QR scan on a guest's phone: /?photo=<cloudinary_url>&vibe=<id>
+  const searchParams =
+    typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search)
+      : null;
+  const sharedPhotoUrl = searchParams?.get('photo');
+  const sharedVibeId = searchParams?.get('vibe') || 'foodie';
+
   const [step, setStep] = useState(1);
   const [selectedPersonality, setSelectedPersonality] = useState(PERSONALITIES[4]);
   const [capturedSelfie, setCapturedSelfie] = useState(null);
   const [generatedAvatar, setGeneratedAvatar] = useState(null);
+  const [cloudinaryUrl, setCloudinaryUrl] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationStepText, setGenerationStepText] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleGenerateAvatar = async () => {
@@ -567,6 +718,7 @@ export default function App() {
 
     setErrorMsg('');
     setIsGenerating(true);
+    setGenerationStepText(`Styling your ${selectedPersonality.name} vibe...`);
 
     try {
       const result = await generateConcertAvatar({
@@ -575,17 +727,33 @@ export default function App() {
       });
 
       setGeneratedAvatar(result.imageUrl);
+
+      // Composite the RuPay branding onto the image and upload to Cloudinary for QR sharing
+      setGenerationStepText('Preparing your QR download link...');
+      try {
+        const brandedDataUrl = await createBrandedDownloadDataUrl(result.imageUrl);
+        const uploaded = await uploadAvatarToCloudinary(brandedDataUrl);
+        setCloudinaryUrl(uploaded.secureUrl);
+      } catch (cloudErr) {
+        if (cloudErr.message !== 'CLOUDINARY_NOT_CONFIGURED') {
+          console.warn('Cloudinary upload warning:', cloudErr);
+        }
+        setCloudinaryUrl(null);
+      }
+
       setStep(4);
     } catch (err) {
       setErrorMsg(err.message || 'Something went wrong. Please try again.');
     } finally {
       setIsGenerating(false);
+      setGenerationStepText('');
     }
   };
 
   const handleReset = () => {
     setCapturedSelfie(null);
     setGeneratedAvatar(null);
+    setCloudinaryUrl(null);
     setErrorMsg('');
     setStep(1);
   };
@@ -619,42 +787,53 @@ export default function App() {
           }}
         />
 
-        {step === 1 && <WelcomeView onStart={() => setStep(2)} />}
-
-        {step === 2 && (
-          <PersonalityView
-            selectedPersonality={selectedPersonality}
-            onSelectPersonality={(p) => setSelectedPersonality(p)}
-            onBack={() => setStep(1)}
-            onContinue={() => setStep(3)}
+        {sharedPhotoUrl ? (
+          <GuestPhotoDownloadView
+            photoUrl={sharedPhotoUrl}
+            personalityId={sharedVibeId}
           />
-        )}
+        ) : (
+          <>
+            {step === 1 && <WelcomeView onStart={() => setStep(2)} />}
 
-        {step === 3 && (
-          <CameraView
-            selectedPersonality={selectedPersonality}
-            capturedSelfie={capturedSelfie}
-            onCaptureSelfie={(dataUrl) => {
-              setCapturedSelfie(dataUrl);
-              setErrorMsg('');
-            }}
-            onRetake={() => {
-              setCapturedSelfie(null);
-              setErrorMsg('');
-            }}
-            onSubmit={handleGenerateAvatar}
-            onBack={() => setStep(2)}
-            isGenerating={isGenerating}
-            errorMsg={errorMsg}
-          />
-        )}
+            {step === 2 && (
+              <PersonalityView
+                selectedPersonality={selectedPersonality}
+                onSelectPersonality={(p) => setSelectedPersonality(p)}
+                onBack={() => setStep(1)}
+                onContinue={() => setStep(3)}
+              />
+            )}
 
-        {step === 4 && (
-          <ResultView
-            generatedAvatar={generatedAvatar}
-            selectedPersonality={selectedPersonality}
-            onDone={handleReset}
-          />
+            {step === 3 && (
+              <CameraView
+                selectedPersonality={selectedPersonality}
+                capturedSelfie={capturedSelfie}
+                onCaptureSelfie={(dataUrl) => {
+                  setCapturedSelfie(dataUrl);
+                  setErrorMsg('');
+                }}
+                onRetake={() => {
+                  setCapturedSelfie(null);
+                  setErrorMsg('');
+                }}
+                onSubmit={handleGenerateAvatar}
+                onBack={() => setStep(2)}
+                isGenerating={isGenerating}
+                generationStepText={generationStepText}
+                errorMsg={errorMsg}
+              />
+            )}
+
+            {step === 4 && (
+              <ResultView
+                generatedAvatar={generatedAvatar}
+                cloudinaryUrl={cloudinaryUrl}
+                selectedPersonality={selectedPersonality}
+                onDone={handleReset}
+              />
+            )}
+          </>
         )}
       </main>
     </div>
